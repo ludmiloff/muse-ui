@@ -24,8 +24,8 @@
     "build:es5": "rimraf es5 && NODE_ENV=es5 babel src -d es5 --ignore *.spec.js && mkdir es5/styles && cp -rf src/styles/* es5/styles",
     "lint": "NODE_ENV=normal eslint --ext .js,.vue src",
     "test": "NODE_ENV=test jest -i",
-    "test:coverage": "NODE_ENV=test jest -i --coverage",
-    "prepush": "yarn run lint",
+    "test:coverage": "NODE_ENV=test jest -i --coverage"
+
   },
   "peerDependencies": {
     "vue": "^2.5.0"
