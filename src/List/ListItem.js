@@ -117,14 +117,15 @@ export default {
     },
     createNestedList (h) {
       if (!this.nested) return null;
+      const nextNestedLevel = this.nestedLevel + 1;
       const list = h(List, {
         class: this.nestedListClass,
         props: {
           nestedIndent: this.nestedIndent,
           toggleNested: this.toggleNested,
           toggleNestedType: this.toggleNestedType,
-          nestedLevel: this.nestedLevel + 1,
-          nestedLevelPadding: this.nestedIndent && this.toggleNestedType === 'expand' ? (this.prependLeft ? 56 : 18) * this.nestedLevel : 0,
+          nestedLevel: nextNestedLevel,
+          nestedLevelPadding: this.nestedIndent && this.toggleNestedType === 'expand' ? (this.prependLeft ? 56 : 18) * nextNestedLevel : 0,
           value: this.getListValue()
         },
         on: {
