@@ -4,6 +4,7 @@ export default {
     return {
       listItemClick: this.listItemClick,
       getNestedLevel: this.getNestedLevel,
+      getNestedLevelPadding: this.getNestedLevelPadding,
       getToggleNested: this.getToggleNested,
       getToggleNestedType: this.getToggleNestedType,
       getListValue: this.getListValue,
@@ -12,6 +13,10 @@ export default {
   },
   props: {
     nestedLevel: {
+      type: Number,
+      default: 0
+    },
+    nextedLevelPadding: {
       type: Number,
       default: 0
     },
@@ -48,6 +53,9 @@ export default {
     getNestedLevel () {
       return this.nestedLevel;
     },
+    getNestedLevelPadding () {
+      return this.getNestedLevelPadding;
+    },    
     getNestedIndent () {
       return this.nestedIndent;
     },
