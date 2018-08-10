@@ -27,7 +27,7 @@ export default {
     prependLeft: Boolean, // item has action or avatar or left side
     avatar: Boolean,
     nested: Boolean, // allow nesting
-    nestedLevelPadding: String, // padding fix for nested items
+    nestedLevelPadding: Number, // padding fix for nested items
     tabIndex: [String, Number],
     value: {}
   },
