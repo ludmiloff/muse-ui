@@ -3245,7 +3245,8 @@ var ListItem = {
       default: true
     },
     avatar: Boolean,
-    nested: Boolean, // 是否允许嵌套
+    nested: Boolean, // allow nesting
+    nestedLevelPadding: String, // padding fix for nested items
     tabIndex: [String, Number],
     value: {}
   },
@@ -3299,7 +3300,7 @@ var ListItem = {
     },
     createItem: function createItem(h) {
       var listValue = this.getListValue();
-      var nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? (this.avatar ? 56 : 18) * this.nestedLevel : 0;
+      //const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? 18 * this.nestedLevel : 0;
       var itemClass = ['mu-item', this.nestedOpen && this.nested ? 'mu-item__open' : '', this.avatar ? 'has-avatar' : '', this.textline, isNotNull(listValue) && isNotNull(this.value) && listValue === this.value ? 'is-selected' : ''].join(' ');
 
       return h(AbstractButton, {
@@ -3312,7 +3313,7 @@ var ListItem = {
           containerElement: this.button ? 'a' : 'div',
           wrapperClass: itemClass,
           wrapperStyle: {
-            'margin-left': nestedPadding ? nestedPadding + 'px' : ''
+            'margin-left': this.nestedLevelPadding ? this.nestedLevelPadding + 'px' : ''
           },
           disabled: !this.button,
           ripple: this.button && this.ripple,
@@ -3337,6 +3338,7 @@ var ListItem = {
           toggleNested: this.toggleNested,
           toggleNestedType: this.toggleNestedType,
           nestedLevel: this.nestedLevel + 1,
+          nestedLevelPadding: this.nestedIndent && this.toggleNestedType === 'expand' ? (this.icon ? 56 : 18) * this.nestedLevel : 0,
           value: this.getListValue()
         },
         on: {
