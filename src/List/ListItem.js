@@ -77,7 +77,7 @@ export default {
     },
     createItem (h) {
       const listValue = this.getListValue();
-      const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? 18 * this.nestedLevel : 0;
+      const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? (this.avatar ? 56 : 18) * this.nestedLevel : 0;
       const itemClass = [
         'mu-item',
         this.nestedOpen && this.nested ? 'mu-item__open' : '',
