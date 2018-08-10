@@ -25,7 +25,8 @@ export default {
       default: true
     },
     avatar: Boolean,
-    nested: Boolean, // 是否允许嵌套
+    nested: Boolean, // allow nesting
+    nestedLevelPadding: String, // padding fix for nested items
     tabIndex: [String, Number],
     value: {}
   },
@@ -77,7 +78,7 @@ export default {
     },
     createItem (h) {
       const listValue = this.getListValue();
-      const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? (this.avatar ? 56 : 18) * this.nestedLevel : 0;
+      //const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? 18 * this.nestedLevel : 0;
       const itemClass = [
         'mu-item',
         this.nestedOpen && this.nested ? 'mu-item__open' : '',
@@ -96,7 +97,7 @@ export default {
           containerElement: this.button ? 'a' : 'div',
           wrapperClass: itemClass,
           wrapperStyle: {
-            'margin-left': nestedPadding ? nestedPadding + 'px' : ''
+            'margin-left': this.nestedLevelPadding ? this.nestedLevelPadding + 'px' : ''
           },
           disabled: !this.button,
           ripple: this.button && this.ripple,
@@ -122,6 +123,7 @@ export default {
           toggleNested: this.toggleNested,
           toggleNestedType: this.toggleNestedType,
           nestedLevel: this.nestedLevel + 1,
+          nestedLevelPadding: this.nestedIndent && this.toggleNestedType === 'expand' ? (this.icon ? 56 : 18) * this.nestedLevel : 0,
           value: this.getListValue()
         },
         on: {
