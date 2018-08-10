@@ -1,4 +1,4 @@
-import '../styles/components/grid.less';
+import '../styles/components/grid-twbs.less';
 import Container from './Container';
 import Row from './Row';
 import Col from './Col';
