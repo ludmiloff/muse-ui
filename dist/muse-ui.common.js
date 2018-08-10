@@ -3167,6 +3167,7 @@ var List = {
     return {
       listItemClick: this.listItemClick,
       getNestedLevel: this.getNestedLevel,
+      getNestedLevelPadding: this.getNestedLevelPadding,
       getToggleNested: this.getToggleNested,
       getToggleNestedType: this.getToggleNestedType,
       getListValue: this.getListValue,
@@ -3176,6 +3177,10 @@ var List = {
 
   props: {
     nestedLevel: {
+      type: Number,
+      default: 0
+    },
+    nextedLevelPadding: {
       type: Number,
       default: 0
     },
@@ -3212,6 +3217,9 @@ var List = {
     getNestedLevel: function getNestedLevel() {
       return this.nestedLevel;
     },
+    getNestedLevelPadding: function getNestedLevelPadding() {
+      return this.getNestedLevelPadding;
+    },
     getNestedIndent: function getNestedIndent() {
       return this.nestedIndent;
     },
@@ -3236,7 +3244,7 @@ var List = {
 var ListItem = {
   name: 'mu-list-item',
   mixins: [route, ripple],
-  inject: ['listItemClick', 'getNestedLevel', 'getNestedIndent', 'getListValue', 'getToggleNested', 'getToggleNestedType'],
+  inject: ['listItemClick', 'getNestedLevel', 'getNestedLevelPadding', 'getNestedIndent', 'getListValue', 'getToggleNested', 'getToggleNestedType'],
   props: {
     button: Boolean,
     nestedListClass: [String, Object, Array],
@@ -3260,6 +3268,9 @@ var ListItem = {
   computed: {
     nestedLevel: function nestedLevel() {
       return this.getNestedLevel();
+    },
+    nestedLevelPadding: function nestedLevelPadding() {
+      return this.getNestedLevelPadding();
     },
     nestedIndent: function nestedIndent() {
       return this.getNestedIndent();

@@ -12,6 +12,7 @@ export default {
   inject: [
     'listItemClick',
     'getNestedLevel',
+    'getNestedLevelPadding',
     'getNestedIndent',
     'getListValue',
     'getToggleNested',
@@ -40,6 +41,9 @@ export default {
     nestedLevel () {
       return this.getNestedLevel();
     },
+    nestedLevelPadding () {
+      return this.getNestedLevelPadding();
+    },    
     nestedIndent () {
       return this.getNestedIndent();
     },
