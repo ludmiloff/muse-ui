@@ -3238,6 +3238,7 @@ var ListItem = {
       type: Boolean,
       default: true
     },
+    prependLeft: Boolean, // item has action or avatar or left side
     avatar: Boolean,
     nested: Boolean, // allow nesting
     nestedLevelPadding: String, // padding fix for nested items
@@ -3294,7 +3295,7 @@ var ListItem = {
     },
     createItem: function createItem(h) {
       var listValue = this.getListValue();
-      //const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? 18 * this.nestedLevel : 0;
+      // const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? 18 * this.nestedLevel : 0;
       var itemClass = ['mu-item', this.nestedOpen && this.nested ? 'mu-item__open' : '', this.avatar ? 'has-avatar' : '', this.textline, isNotNull(listValue) && isNotNull(this.value) && listValue === this.value ? 'is-selected' : ''].join(' ');
 
       return h(AbstractButton, {
@@ -3332,7 +3333,7 @@ var ListItem = {
           toggleNested: this.toggleNested,
           toggleNestedType: this.toggleNestedType,
           nestedLevel: this.nestedLevel + 1,
-          nestedLevelPadding: this.nestedIndent && this.toggleNestedType === 'expand' ? (this.icon ? 56 : 18) * this.nestedLevel : 0,
+          nestedLevelPadding: this.nestedIndent && this.toggleNestedType === 'expand' ? (this.prependLeft ? 56 : 18) * this.nestedLevel : 0,
           value: this.getListValue()
         },
         on: {
