@@ -3293,7 +3293,7 @@ var ListItem = {
     },
     createItem: function createItem(h) {
       var listValue = this.getListValue();
-      var nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? 18 * this.nestedLevel : 0;
+      var nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? (this.avatar ? 56 : 18) * this.nestedLevel : 0;
       var itemClass = ['mu-item', this.nestedOpen && this.nested ? 'mu-item__open' : '', this.avatar ? 'has-avatar' : '', this.textline, isNotNull(listValue) && isNotNull(this.value) && listValue === this.value ? 'is-selected' : ''].join(' ');
 
       return h(AbstractButton, {
