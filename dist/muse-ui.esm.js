@@ -3161,7 +3161,6 @@ var List = {
     return {
       listItemClick: this.listItemClick,
       getNestedLevel: this.getNestedLevel,
-      getNestedLevelPadding: this.getNestedLevelPadding,
       getToggleNested: this.getToggleNested,
       getToggleNestedType: this.getToggleNestedType,
       getListValue: this.getListValue,
@@ -3171,10 +3170,6 @@ var List = {
 
   props: {
     nestedLevel: {
-      type: Number,
-      default: 0
-    },
-    nextedLevelPadding: {
       type: Number,
       default: 0
     },
@@ -3211,9 +3206,6 @@ var List = {
     getNestedLevel: function getNestedLevel() {
       return this.nestedLevel;
     },
-    getNestedLevelPadding: function getNestedLevelPadding() {
-      return this.getNestedLevelPadding;
-    },
     getNestedIndent: function getNestedIndent() {
       return this.nestedIndent;
     },
@@ -3238,7 +3230,7 @@ var List = {
 var ListItem = {
   name: 'mu-list-item',
   mixins: [route, ripple],
-  inject: ['listItemClick', 'getNestedLevel', 'getNestedLevelPadding', 'getNestedIndent', 'getListValue', 'getToggleNested', 'getToggleNestedType'],
+  inject: ['listItemClick', 'getNestedLevel', 'getNestedIndent', 'getListValue', 'getToggleNested', 'getToggleNestedType'],
   props: {
     button: Boolean,
     nestedListClass: [String, Object, Array],
@@ -3246,10 +3238,8 @@ var ListItem = {
       type: Boolean,
       default: true
     },
-    prependLeft: Boolean, // item has action or avatar or left side
     avatar: Boolean,
-    nested: Boolean, // allow nesting
-    nestedLevelPadding: Number, // padding fix for nested items
+    nested: Boolean, // 是否允许嵌套
     tabIndex: [String, Number],
     value: {}
   },
@@ -3262,9 +3252,6 @@ var ListItem = {
   computed: {
     nestedLevel: function nestedLevel() {
       return this.getNestedLevel();
-    },
-    nestedLevelPadding: function nestedLevelPadding() {
-      return this.getNestedLevelPadding();
     },
     nestedIndent: function nestedIndent() {
       return this.getNestedIndent();
@@ -3306,8 +3293,8 @@ var ListItem = {
     },
     createItem: function createItem(h) {
       var listValue = this.getListValue();
-      // const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? 18 * this.nestedLevel : 0;
-      var itemClass = ['mu-item', this.nestedOpen && this.nested ? 'mu-item__open' : '', this.avatar ? 'has-avatar' : '', this.textline, isNotNull(listValue) && isNotNull(this.value) && listValue === this.value ? 'is-selected' : ''].join(' ');
+      var nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? this.nestedLevel > 0 ? 'nested' + this.nestedLevel : '' : '';
+      var itemClass = ['mu-item', nestedPadding, this.nestedOpen && this.nested ? 'mu-item__open' : '', this.avatar ? 'has-avatar' : '', this.textline, isNotNull(listValue) && isNotNull(this.value) && listValue === this.value ? 'is-selected' : ''].join(' ');
 
       return h(AbstractButton, {
         class: 'mu-item-wrapper',
@@ -3318,9 +3305,9 @@ var ListItem = {
         props: _extends({
           containerElement: this.button ? 'a' : 'div',
           wrapperClass: itemClass,
-          wrapperStyle: {
-            'margin-left': this.nestedLevelPadding ? this.nestedLevelPadding + 'px' : ''
-          },
+          // wrapperStyle: {
+          //   'margin-left': nestedPadding ? nestedPadding + 'px' : ''
+          // },
           disabled: !this.button,
           ripple: this.button && this.ripple,
           rippleColor: this.rippleColor,
@@ -3337,15 +3324,13 @@ var ListItem = {
     },
     createNestedList: function createNestedList(h) {
       if (!this.nested) return null;
-      var nextNestedLevel = this.nestedLevel + 1;
       var list = h(List, {
         class: this.nestedListClass,
         props: {
           nestedIndent: this.nestedIndent,
           toggleNested: this.toggleNested,
           toggleNestedType: this.toggleNestedType,
-          nestedLevel: nextNestedLevel,
-          nestedLevelPadding: this.nestedIndent && this.toggleNestedType === 'expand' ? (this.prependLeft ? 56 : 18) * nextNestedLevel : 0,
+          nestedLevel: this.nestedLevel + 1,
           value: this.getListValue()
         },
         on: {

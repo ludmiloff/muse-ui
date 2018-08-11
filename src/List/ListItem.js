@@ -12,7 +12,6 @@ export default {
   inject: [
     'listItemClick',
     'getNestedLevel',
-    'getNestedLevelPadding',
     'getNestedIndent',
     'getListValue',
     'getToggleNested',
@@ -25,10 +24,8 @@ export default {
       type: Boolean,
       default: true
     },
-    prependLeft: Boolean, // item has action or avatar or left side
     avatar: Boolean,
-    nested: Boolean, // allow nesting
-    nestedLevelPadding: Number, // padding fix for nested items
+    nested: Boolean, // 是否允许嵌套
     tabIndex: [String, Number],
     value: {}
   },
@@ -41,9 +38,6 @@ export default {
     nestedLevel () {
       return this.getNestedLevel();
     },
-    nestedLevelPadding () {
-      return this.getNestedLevelPadding();
-    },    
     nestedIndent () {
       return this.getNestedIndent();
     },
@@ -83,9 +77,10 @@ export default {
     },
     createItem (h) {
       const listValue = this.getListValue();
-      // const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? 18 * this.nestedLevel : 0;
+      const nestedPadding = this.nestedIndent && this.toggleNestedType === 'expand' ? ((this.nestedLevel > 0) ? 'nested' + this.nestedLevel : '') : '';
       const itemClass = [
         'mu-item',
+        nestedPadding,
         this.nestedOpen && this.nested ? 'mu-item__open' : '',
         this.avatar ? 'has-avatar' : '',
         this.textline,
@@ -101,9 +96,9 @@ export default {
         props: {
           containerElement: this.button ? 'a' : 'div',
           wrapperClass: itemClass,
-          wrapperStyle: {
-            'margin-left': this.nestedLevelPadding ? this.nestedLevelPadding + 'px' : ''
-          },
+          // wrapperStyle: {
+          //   'margin-left': nestedPadding ? nestedPadding + 'px' : ''
+          // },
           disabled: !this.button,
           ripple: this.button && this.ripple,
           rippleColor: this.rippleColor,
@@ -121,15 +116,13 @@ export default {
     },
     createNestedList (h) {
       if (!this.nested) return null;
-      const nextNestedLevel = this.nestedLevel + 1;
       const list = h(List, {
         class: this.nestedListClass,
         props: {
           nestedIndent: this.nestedIndent,
           toggleNested: this.toggleNested,
           toggleNestedType: this.toggleNestedType,
-          nestedLevel: nextNestedLevel,
-          nestedLevelPadding: this.nestedIndent && this.toggleNestedType === 'expand' ? (this.prependLeft ? 56 : 18) * nextNestedLevel : 0,
+          nestedLevel: this.nestedLevel + 1,
           value: this.getListValue()
         },
         on: {
