@@ -4,6 +4,7 @@
 ### Changed
 - removed top border from expanded expansion panel
 - removed top and bottom margin from expanded expansion panel
+- removed height changing for expanded expansion panel header 
 
 ## [1.0.0-beta1] - 2018-08-10
 ### Added
