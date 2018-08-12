@@ -10099,7 +10099,7 @@ var DataTable = {
     columns: Array,
     noDataText: {
       type: String,
-      default: '暂无数据'
+      default: 'No Data'
     },
     height: [String, Number],
     maxHeight: [String, Number],
