@@ -81,9 +81,9 @@ export default {
       const el = activeTab.$el;
       const lineEl = this.$refs.line;
       const rect = el.getBoundingClientRect();
-      const tabsRect = this.$el.getBoundingClientRect();
+      // const tabsRect = this.$el.getBoundingClientRect();
       lineEl.style.width = rect.width + 'px';
-      translateUtils.translateElement(lineEl, rect.left - tabsRect.left, 0);
+      translateUtils.translateElement(lineEl, rect.offsetLeft, 0); // left - tabsRect.left, 0);
     }
   },
   watch: {
@@ -114,13 +114,13 @@ export default {
       }]
     }, [
       this.$slots.default,
-      h('span', {
-        staticClass: `mu-tab-link-highlight ${this.getNormalColorClass(this.indicatorColor, false, false)}`,
-        style: {
-          'background-color': this.getColor(this.indicatorColor)
-        },
-        ref: 'line'
-      })
+      // h('span', {
+      //   staticClass: `mu-tab-link-highlight ${this.getNormalColorClass(this.indicatorColor, false, false)}`,
+      //   style: {
+      //     'background-color': this.getColor(this.indicatorColor)
+      //   },
+      //   ref: 'line'
+      // })
     ]);
   }
 };

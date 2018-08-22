@@ -1,4 +1,4 @@
-/* muse-ui myron.liu version 3.0.0-rc.7 */
+/* muse-ui myron.liu version 3.0.0 */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -1501,14 +1501,14 @@ var TouchRipple = {
     }
   },
   render: function render(h) {
-    var listeners = this.autoBind ? {
+    var listeners = this.autoBind ? _extends({}, this.$listeners, {
       mousedown: this.handleMouseDown,
       mouseup: this.end,
       mouseleave: this.end,
       touchstart: this.handleTouchStart,
       touchend: this.end,
       touchcancel: this.end
-    } : {};
+    }) : _extends({}, this.$listeners);
     return h(this.tag, {
       on: listeners
     }, [h('div', {
@@ -4625,9 +4625,10 @@ function select () {
       },
       handleClick: function handleClick(e) {
         if (this.disabled || this.readonly) return;
-        this.toggle();
-        this.muFormItem && this.muFormItem.onBlur();
         this.end();
+        this.toggle();
+        if (!this) return; // #1136
+        this.muFormItem && this.muFormItem.onBlur();
         this.$emit('click', e);
       },
       handleKeydown: function handleKeydown(e) {
@@ -6741,6 +6742,98 @@ var TabsTheme = (function (theme) {
   return '\n  .mu-tabs{\n    background-color: ' + theme.primary + ';\n    color: ' + fade(theme.text.alternate, 0.7) + ';\n  }\n\n  .mu-tabs-inverse {\n    background-color: ' + theme.background.default + ';\n    color: ' + theme.text.secondary + ';\n  }\n\n  .mu-tab-link-highlight{\n    background-color: ' + theme.secondary + ';\n  }\n  .mu-tab-active {\n    color: ' + theme.text.alternate + ';\n  }\n  .mu-tab-active.is-inverse {\n    color: ' + theme.text.primary + ';\n  }\n  ';
 });
 
+var docStyle = typeof document !== 'undefined' ? document.documentElement.style : {};
+var engine;
+var translate3d = false;
+
+if (typeof window !== 'undefined' && window.opera && Object.prototype.toString.call(window.opera) === '[object Opera]') {
+  engine = 'presto';
+} else if ('MozAppearance' in docStyle) {
+  engine = 'gecko';
+} else if ('WebkitAppearance' in docStyle) {
+  engine = 'webkit';
+} else if (typeof navigator !== 'undefined' && typeof navigator.cpuClass === 'string') {
+  engine = 'trident';
+} else {
+  engine = 'node';
+}
+
+var cssPrefix = { trident: '-ms-', gecko: '-moz-', webkit: '-webkit-', presto: '-o-' }[engine];
+
+var vendorPrefix = { trident: 'ms', gecko: 'Moz', webkit: 'Webkit', presto: 'O' }[engine];
+
+var helperElem = typeof document !== 'undefined' ? document.createElement('div') : {};
+var perspectiveProperty = vendorPrefix + 'Perspective';
+var transformProperty = vendorPrefix + 'Transform';
+var transformStyleName = cssPrefix + 'transform';
+var transitionProperty = vendorPrefix + 'Transition';
+var transitionStyleName = cssPrefix + 'transition';
+var transitionEndProperty = (vendorPrefix || '').toLowerCase() + 'TransitionEnd';
+
+if (helperElem.style && helperElem.style[perspectiveProperty] !== undefined) {
+  translate3d = true;
+}
+
+var getTranslate = function getTranslate(element) {
+  var result = { left: 0, top: 0 };
+  if (element === null || element.style === null) return result;
+
+  var transform = element.style[transformProperty];
+  var matches = /translate\(\s*(-?\d+(\.?\d+?)?)px,\s*(-?\d+(\.\d+)?)px\)\s*translateZ\(0px\)/g.exec(transform);
+  if (matches) {
+    result.left = +matches[1];
+    result.top = +matches[3];
+  }
+
+  return result;
+};
+
+var translateElement = function translateElement(element, x, y) {
+  if (x === null && y === null) return;
+
+  if (element === null || element.style === null) return;
+
+  if (!element.style[transformProperty] && x === 0 && y === 0) return;
+
+  if (x === null || y === null) {
+    var translate = getTranslate(element);
+    if (x === null) {
+      x = translate.left;
+    }
+    if (y === null) {
+      y = translate.top;
+    }
+  }
+
+  cancelTranslateElement(element);
+
+  if (translate3d) {
+    element.style[transformProperty] += ' translate(' + (x ? x + 'px' : '0px') + ',' + (y ? y + 'px' : '0px') + ') translateZ(0px)';
+  } else {
+    element.style[transformProperty] += ' translate(' + (x ? x + 'px' : '0px') + ',' + (y ? y + 'px' : '0px') + ')';
+  }
+};
+
+var cancelTranslateElement = function cancelTranslateElement(element) {
+  if (element === null || element.style === null) return;
+  var transformValue = element.style[transformProperty];
+  if (transformValue) {
+    transformValue = transformValue.replace(/translate\(\s*(-?\d+(\.?\d+?)?)px,\s*(-?\d+(\.\d+)?)px\)\s*translateZ\(0px\)/g, '');
+    element.style[transformProperty] = transformValue;
+  }
+};
+
+var translateUtil = {
+  transformProperty: transformProperty,
+  transformStyleName: transformStyleName,
+  transitionProperty: transitionProperty,
+  transitionStyleName: transitionStyleName,
+  transitionEndProperty: transitionEndProperty,
+  getElementTranslate: getTranslate,
+  translateElement: translateElement,
+  cancelTranslateElement: cancelTranslateElement
+};
+
 var Tabs = {
   name: 'mu-tabs',
   mixins: [color],
@@ -6818,18 +6911,14 @@ var Tabs = {
       })[0];
     },
     setTabHighLineStyle: function setTabHighLineStyle() {
-      var _this = this;
-
-      this.$nextTick(function () {
-        var activeTab = _this.getActiveTab();
-        if (!activeTab || !_this.$refs.line || !activeTab.$el) return;
-        var el = activeTab.$el;
-        var lineEl = _this.$refs.line;
-        var rect = el.getBoundingClientRect();
-        var tabsRect = _this.$el.getBoundingClientRect();
-        lineEl.style.width = rect.width + 'px';
-        lineEl.style.left = rect.left - tabsRect.left + 'px';
-      });
+      var activeTab = this.getActiveTab();
+      if (!activeTab || !this.$refs.line || !activeTab.$el) return;
+      var el = activeTab.$el;
+      var lineEl = this.$refs.line;
+      var rect = el.getBoundingClientRect();
+      // const tabsRect = this.$el.getBoundingClientRect();
+      lineEl.style.width = rect.width + 'px';
+      translateUtil.translateElement(lineEl, rect.offsetLeft, 0); // left - tabsRect.left, 0);
     }
   },
   watch: {
@@ -6858,13 +6947,15 @@ var Tabs = {
         name: 'resize',
         value: this.setTabHighLineStyle
       }]
-    }, [this.$slots.default, h('span', {
-      staticClass: 'mu-tab-link-highlight ' + this.getNormalColorClass(this.indicatorColor, false, false),
-      style: {
-        'background-color': this.getColor(this.indicatorColor)
-      },
-      ref: 'line'
-    })]);
+    }, [this.$slots.default]
+    // h('span', {
+    //   staticClass: `mu-tab-link-highlight ${this.getNormalColorClass(this.indicatorColor, false, false)}`,
+    //   style: {
+    //     'background-color': this.getColor(this.indicatorColor)
+    //   },
+    //   ref: 'line'
+    // })
+    );
   }
 };
 
@@ -7249,10 +7340,17 @@ var DialogTheme = (function (theme) {
 var Dialog = {
   name: 'mu-dialog',
   mixins: [popup],
+  directives: {
+    resize: resize
+  },
   props: {
     dialogClass: [String, Array, Object],
     title: String,
     scrollable: Boolean,
+    padding: { // 设置scrollable 之后dailog 框距离顶部和底部的值
+      type: Number,
+      default: 64
+    },
     fullscreen: Boolean,
     width: [String, Number],
     maxWidth: [String, Number],
@@ -7287,15 +7385,12 @@ var Dialog = {
         dialogEl.style.maxHeight = '';
         return;
       }
-
-      var maxDialogContentHeight = window.innerHeight - 2 * 64;
+      var maxDialogContentHeight = window.innerHeight - 2 * this.padding;
       var _$refs = this.$refs,
           footer = _$refs.footer,
           title = _$refs.title,
           elBody = _$refs.elBody;
 
-      if (footer) maxDialogContentHeight -= footer.offsetHeight;
-      if (title) maxDialogContentHeight -= title.offsetHeight;
       if (elBody) {
         var maxBodyHeight = maxDialogContentHeight;
         if (footer) maxBodyHeight -= footer.offsetHeight;
@@ -7316,6 +7411,8 @@ var Dialog = {
     }
   },
   render: function render(h) {
+    var _this3 = this;
+
     var hasTitleSlots = this.$slots.title && this.$slots.title.length > 0;
     var isShowTitle = this.title || hasTitleSlots;
     var dialogTitle = isShowTitle ? h('div', {
@@ -7356,6 +7453,12 @@ var Dialog = {
       }
     }, [h('div', {
       staticClass: 'mu-dialog-wrapper',
+      directives: [{
+        name: 'resize',
+        value: function value() {
+          return _this3.setMaxDialogContentHeight();
+        }
+      }],
       style: {
         'z-index': this.zIndex
       },
@@ -8049,74 +8152,84 @@ var body = {
       });
     },
     createCheckboxTd: function createCheckboxTd(h, index) {
+      var _this = this;
+
       return h('td', {
         staticClass: 'mu-checkbox-col'
       }, [h(Checkbox, {
         props: {
           inputValue: this.isSelected(index),
           disabled: !this.selectable
+        },
+        on: {
+          change: function change() {
+            return _this.toggleSelect(index);
+          },
+          click: function click(e) {
+            e.stopPropagation();
+          }
         }
       })]);
     },
     createContent: function createContent(h) {
-      var _this = this;
+      var _this2 = this;
 
       var contents = [];
 
       var _loop = function _loop(index) {
-        var row = _this.data[index];
-        var arr = _this.$scopedSlots.default ? _this.createSlotContent(row, index) : _this.columns.map(function (column) {
+        var row = _this2.data[index];
+        var arr = _this2.$scopedSlots.default ? _this2.createSlotContent(row, index) : _this2.columns.map(function (column) {
           var text = column.formatter && typeof column.formatter === 'function' ? column.formatter(row[column.name], row) : row[column.name];
           return h('td', {
             class: [column.align || column.cellAlign ? 'is-' + (column.cellAlign || column.align) : '']
           }, text);
         }) || [];
-        if (_this.checkbox) arr.unshift(_this.createCheckboxTd(h, index));
+        if (_this2.checkbox) arr.unshift(_this2.createCheckboxTd(h, index));
 
-        var rowClassName = typeof _this.rowClassName === 'function' ? _this.rowClassName(index, row) : _this.rowClassName;
+        var rowClassName = typeof _this2.rowClassName === 'function' ? _this2.rowClassName(index, row) : _this2.rowClassName;
         contents.push(h('tr', {
           staticClass: rowClassName,
           class: {
-            'is-hover': _this.hover && _this.hoverIndex === index,
-            'is-stripe': _this.stripe && index % 2 !== 0,
-            'is-selected': _this.isSelected(index)
+            'is-hover': _this2.hover && _this2.hoverIndex === index,
+            'is-stripe': _this2.stripe && index % 2 !== 0,
+            'is-selected': _this2.isSelected(index)
           },
-          style: typeof _this.rowStyle === 'function' ? _this.rowStyle(index, row) : _this.rowStyle,
+          style: typeof _this2.rowStyle === 'function' ? _this2.rowStyle(index, row) : _this2.rowStyle,
           on: {
             mouseenter: function mouseenter(e) {
-              _this.hoverIndex = index;
-              _this.$emit('row-mouseenter', index, row, e);
+              _this2.hoverIndex = index;
+              _this2.$emit('row-mouseenter', index, row, e);
             },
             mouseleave: function mouseleave(e) {
-              _this.hoverIndex = -1;
-              _this.$emit('row-mouseleave', index, row, e);
+              _this2.hoverIndex = -1;
+              _this2.$emit('row-mouseleave', index, row, e);
             },
             contextmenu: function contextmenu(e) {
-              _this.$emit('row-contextmenu', index, row, e);
+              _this2.$emit('row-contextmenu', index, row, e);
             },
             click: function click(e) {
-              _this.toggleSelect(index);
-              if (_this.autoExpand) _this.toggleExpand(index);
-              _this.$emit('row-click', index, row, e);
+              if (!_this2.checkbox) _this2.toggleSelect(index);
+              if (_this2.autoExpand) _this2.toggleExpand(index);
+              _this2.$emit('row-click', index, row, e);
             },
             dblclick: function dblclick(e) {
-              return _this.$emit('row-dblclick', index, row, e);
+              return _this2.$emit('row-dblclick', index, row, e);
             }
           },
-          key: row[_this.rowKey]
+          key: row[_this2.rowKey]
         }, arr));
 
-        if (_this.$scopedSlots.expand) {
+        if (_this2.$scopedSlots.expand) {
           contents.push(h('tr', {
             staticClass: 'mu-table-expand-row'
           }, [h('td', {
             attrs: {
-              colspan: _this.columns.length + (_this.checkbox ? 1 : 0)
+              colspan: _this2.columns.length + (_this2.checkbox ? 1 : 0)
             },
             class: {
-              'is-expand': _this.expandIndex === index
+              'is-expand': _this2.expandIndex === index
             }
-          }, _this.expandIndex === index ? [h(ExpandTransition, {}, _this.$scopedSlots.expand({
+          }, _this2.expandIndex === index ? [h(ExpandTransition, {}, _this2.$scopedSlots.expand({
             row: row,
             $index: index
           }))] : undefined)]));
@@ -12002,6 +12115,7 @@ var selection = {
         attrs: {
           tabindex: 0,
           readonly: !enable,
+          disabled: this.disabled,
           placeholder: !this.value && this.value !== 0 ? this.placeholder : ''
         },
         domProps: {
@@ -12081,7 +12195,8 @@ var selection = {
       }
 
       this.options.forEach(function (option) {
-        option.visible = !_this5.autoComplete || !val || option.label.toLowerCase().indexOf(val.toLowerCase()) !== -1;
+        var searchText = option.searchText || option.label;
+        option.visible = !_this5.autoComplete || !val || searchText.toLowerCase().indexOf(val.toLowerCase()) !== -1;
       });
       this.resetFocusIndex();
       if (this.isFocused && !this.open) this.open = true;
@@ -12294,6 +12409,7 @@ var Option = {
       type: Boolean,
       default: true
     },
+    searchText: String, // 用户搜索的文本，如果设置此值，会根据这个字段来搜搜，否则使用label属性
     avatar: Boolean
   },
   data: function data() {
@@ -12364,100 +12480,6 @@ var PickerTheme$1 = (function (theme) {
   return "\n  .mu-slide-picker{\n    background: " + theme.background.paper + ";\n  }\n  .mu-slide-picker-center-highlight {\n    border-top-color: " + theme.divider + ";\n    border-bottom-color: " + theme.divider + ";\n  }\n  .mu-slide-picker-slot.mu-slide-picker-slot-divider{\n    color: " + theme.text.primary + ";\n  }\n  .mu-slide-picker-item{\n    color: " + theme.text.secondary + ";\n  }\n  .mu-slide-picker-item.selected {\n    color: " + theme.text.primary + ";\n  }\n  ";
 });
 
-var docStyle = typeof document !== 'undefined' ? document.documentElement.style : {};
-var engine;
-var translate3d = false;
-
-if (typeof window !== 'undefined' && window.opera && Object.prototype.toString.call(window.opera) === '[object Opera]') {
-  engine = 'presto';
-} else if ('MozAppearance' in docStyle) {
-  engine = 'gecko';
-} else if ('WebkitAppearance' in docStyle) {
-  engine = 'webkit';
-} else if (typeof navigator !== 'undefined' && typeof navigator.cpuClass === 'string') {
-  engine = 'trident';
-} else {
-  engine = 'node';
-}
-
-var cssPrefix = { trident: '-ms-', gecko: '-moz-', webkit: '-webkit-', presto: '-o-' }[engine];
-
-var vendorPrefix = { trident: 'ms', gecko: 'Moz', webkit: 'Webkit', presto: 'O' }[engine];
-
-var helperElem = typeof document !== 'undefined' ? document.createElement('div') : {};
-var perspectiveProperty = vendorPrefix + 'Perspective';
-var transformProperty = vendorPrefix + 'Transform';
-var transformStyleName = cssPrefix + 'transform';
-var transitionProperty = vendorPrefix + 'Transition';
-var transitionStyleName = cssPrefix + 'transition';
-var transitionEndProperty = (vendorPrefix || '').toLowerCase() + 'TransitionEnd';
-
-if (helperElem.style && helperElem.style[perspectiveProperty] !== undefined) {
-  translate3d = true;
-}
-
-var getTranslate = function getTranslate(element) {
-  var result = { left: 0, top: 0 };
-  if (element === null || element.style === null) return result;
-
-  var transform = element.style[transformProperty];
-  var matches = /translate\(\s*(-?\d+(\.?\d+?)?)px,\s*(-?\d+(\.\d+)?)px\)\s*translateZ\(0px\)/g.exec(transform);
-  if (matches) {
-    result.left = +matches[1];
-    result.top = +matches[3];
-  }
-
-  return result;
-};
-
-var translateElement = function translateElement(element, x, y) {
-  if (x === null && y === null) return;
-
-  if (element === null || element.style === null) return;
-
-  if (!element.style[transformProperty] && x === 0 && y === 0) return;
-
-  if (x === null || y === null) {
-    var translate = getTranslate(element);
-    if (x === null) {
-      x = translate.left;
-    }
-    if (y === null) {
-      y = translate.top;
-    }
-  }
-
-  cancelTranslateElement(element);
-
-  if (translate3d) {
-    element.style[transformProperty] += ' translate(' + (x ? x + 'px' : '0px') + ',' + (y ? y + 'px' : '0px') + ') translateZ(0px)';
-  } else {
-    element.style[transformProperty] += ' translate(' + (x ? x + 'px' : '0px') + ',' + (y ? y + 'px' : '0px') + ')';
-  }
-};
-
-var cancelTranslateElement = function cancelTranslateElement(element) {
-  if (element === null || element.style === null) return;
-  var transformValue = element.style[transformProperty];
-  if (transformValue) {
-    transformValue = transformValue.replace(/translate\(\s*(-?\d+(\.?\d+?)?)px,\s*(-?\d+(\.\d+)?)px\)\s*translateZ\(0px\)/g, '');
-    element.style[transformProperty] = transformValue;
-  }
-};
-
-var translateUtil = {
-  transformProperty: transformProperty,
-  transformStyleName: transformStyleName,
-  transitionProperty: transitionProperty,
-  transitionStyleName: transitionStyleName,
-  transitionEndProperty: transitionEndProperty,
-  getElementTranslate: getTranslate,
-  translateElement: translateElement,
-  cancelTranslateElement: cancelTranslateElement
-};
-
-var ITEM_HEIGHT = 36;
-
 var PickerSlot = {
   name: 'mu-slide-picker-slot',
   directives: {
@@ -12477,6 +12499,10 @@ var PickerSlot = {
       default: function _default() {
         return [];
       }
+    },
+    itemHeight: {
+      type: Number,
+      default: 36
     },
     value: {},
     textAlign: {
@@ -12502,9 +12528,8 @@ var PickerSlot = {
   },
 
   computed: {
-    itemHeight: function itemHeight() {},
     contentHeight: function contentHeight() {
-      return ITEM_HEIGHT * this.visibleItemCount;
+      return this.itemHeight * this.visibleItemCount;
     },
     valueIndex: function valueIndex() {
       return this.values.indexOf(this.value);
@@ -12512,7 +12537,7 @@ var PickerSlot = {
     dragRange: function dragRange() {
       var values = this.values;
       var visibleItemCount = this.visibleItemCount;
-      return [-ITEM_HEIGHT * (values.length - Math.ceil(visibleItemCount / 2)), ITEM_HEIGHT * Math.floor(visibleItemCount / 2)];
+      return [-this.itemHeight * (values.length - Math.ceil(visibleItemCount / 2)), this.itemHeight * Math.floor(visibleItemCount / 2)];
     }
   },
   mounted: function mounted() {
@@ -12527,12 +12552,12 @@ var PickerSlot = {
       var valueIndex = values.indexOf(value);
       var offset = Math.floor(this.visibleItemCount / 2);
       if (valueIndex !== -1) {
-        return (valueIndex - offset) * -ITEM_HEIGHT;
+        return (valueIndex - offset) * -this.itemHeight;
       }
     },
     translate2Value: function translate2Value(translate) {
-      translate = Math.round(translate / ITEM_HEIGHT) * ITEM_HEIGHT;
-      var index = -(translate - Math.floor(this.visibleItemCount / 2) * ITEM_HEIGHT) / ITEM_HEIGHT;
+      translate = Math.round(translate / this.itemHeight) * this.itemHeight;
+      var index = -(translate - Math.floor(this.visibleItemCount / 2) * this.itemHeight) / this.itemHeight;
       return this.values[index];
     },
     doOnValueChange: function doOnValueChange() {
@@ -12541,10 +12566,12 @@ var PickerSlot = {
       translateUtil.translateElement(wrapper, null, this.value2Translate(value));
     },
     doOnValuesChange: function doOnValuesChange() {
+      var _this = this;
+
       var el = this.$el;
       var items = el.querySelectorAll('.mu-slide-picker-item');
       Array.prototype.forEach.call(items, function (item, index) {
-        translateUtil.translateElement(item, null, ITEM_HEIGHT * index);
+        translateUtil.translateElement(item, null, _this.itemHeight * index);
       });
     },
     handleStart: function handleStart() {
@@ -12558,7 +12585,7 @@ var PickerSlot = {
       this.prevTranslate = translate;
     },
     handleEnd: function handleEnd(pos, drag, event) {
-      var _this = this;
+      var _this2 = this;
 
       var el = this.$refs.wrapper;
       var momentumRatio = 7;
@@ -12570,23 +12597,23 @@ var PickerSlot = {
       var dragRange = this.dragRange;
       this.animate = true;
       transitionEnd(el, function () {
-        _this.animate = false;
+        _this2.animate = false;
       });
       this.$nextTick(function () {
         var translate = void 0;
         if (momentumTranslate) {
-          translate = Math.round(momentumTranslate / ITEM_HEIGHT) * ITEM_HEIGHT;
+          translate = Math.round(momentumTranslate / _this2.itemHeight) * _this2.itemHeight;
         } else {
-          translate = Math.round(currentTranslate / ITEM_HEIGHT) * ITEM_HEIGHT;
+          translate = Math.round(currentTranslate / _this2.itemHeight) * _this2.itemHeight;
         }
         translate = Math.max(Math.min(translate, dragRange[1]), dragRange[0]);
         translateUtil.translateElement(el, null, translate);
-        _this.$emit('change', _this.translate2Value(translate));
+        _this2.$emit('change', _this2.translate2Value(translate));
       });
     }
   },
   render: function render(h) {
-    var _this2 = this;
+    var _this3 = this;
 
     return h('div', {
       staticClass: 'mu-slide-picker-slot',
@@ -12622,10 +12649,10 @@ var PickerSlot = {
       return h('div', {
         staticClass: 'mu-slide-picker-item',
         style: {
-          'text-align': _this2.textAlign
+          'text-align': _this3.textAlign
         },
         class: {
-          selected: item === _this2.value
+          selected: item === _this3.value
         },
         key: 'pick-slot-' + index
       }, item.text || item);
@@ -13495,7 +13522,7 @@ TextField.install = function (Vue$$1) {
 
 theme.addCreateTheme(TextFieldTheme);
 
-var version = '3.0.0-rc.7';
+var version = '3.0.0';
 var components = {
   Alert: Alert, AppBar: AppBar, AutoComplete: AutoComplete, Avatar: Avatar,
   Badge: Badge, BottomNav: BottomNav, BottomSheet: BottomSheet, Breadcrumbs: Breadcrumbs, Button: Button,

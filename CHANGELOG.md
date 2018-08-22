@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+## [1.0.0-beta1] - 2018-08-22
+### Changed
+- fixed upstream #1123 - Vue.use order for ExpansionPanel and Button breaks expansion panel toggle button
+
+
+
 ## [1.0.0-beta1] - 2018-08-12
 ### Changed
 - removed top border from expanded expansion panel
