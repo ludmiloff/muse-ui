@@ -83,7 +83,7 @@ export default {
       const rect = el.getBoundingClientRect();
       // const tabsRect = this.$el.getBoundingClientRect();
       lineEl.style.width = rect.width + 'px';
-      translateUtils.translateElement(lineEl, rect.offsetLeft, 0); // left - tabsRect.left, 0);
+      translateUtils.translateElement(lineEl, el.offsetLeft, 0); // left - tabsRect.left, 0);
     }
   },
   watch: {

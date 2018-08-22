@@ -6918,7 +6918,7 @@ var Tabs = {
       var rect = el.getBoundingClientRect();
       // const tabsRect = this.$el.getBoundingClientRect();
       lineEl.style.width = rect.width + 'px';
-      translateUtil.translateElement(lineEl, rect.offsetLeft, 0); // left - tabsRect.left, 0);
+      translateUtil.translateElement(lineEl, el.offsetLeft, 0); // left - tabsRect.left, 0);
     }
   },
   watch: {
