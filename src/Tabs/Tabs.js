@@ -114,13 +114,13 @@ export default {
       }]
     }, [
       this.$slots.default,
-      // h('span', {
-      //   staticClass: `mu-tab-link-highlight ${this.getNormalColorClass(this.indicatorColor, false, false)}`,
-      //   style: {
-      //     'background-color': this.getColor(this.indicatorColor)
-      //   },
-      //   ref: 'line'
-      // })
+      h('span', {
+        staticClass: `mu-tab-link-highlight ${this.getNormalColorClass(this.indicatorColor, false, false)}`,
+        style: {
+          'background-color': this.getColor(this.indicatorColor)
+        },
+        ref: 'line'
+      })
     ]);
   }
 };

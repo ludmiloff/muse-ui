@@ -6941,15 +6941,13 @@ var Tabs = {
         name: 'resize',
         value: this.setTabHighLineStyle
       }]
-    }, [this.$slots.default]
-    // h('span', {
-    //   staticClass: `mu-tab-link-highlight ${this.getNormalColorClass(this.indicatorColor, false, false)}`,
-    //   style: {
-    //     'background-color': this.getColor(this.indicatorColor)
-    //   },
-    //   ref: 'line'
-    // })
-    );
+    }, [this.$slots.default, h('span', {
+      staticClass: 'mu-tab-link-highlight ' + this.getNormalColorClass(this.indicatorColor, false, false),
+      style: {
+        'background-color': this.getColor(this.indicatorColor)
+      },
+      ref: 'line'
+    })]);
   }
 };
 
